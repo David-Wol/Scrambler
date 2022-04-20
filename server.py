@@ -1,5 +1,4 @@
 from operator import xor
-
 import numpy as np
 import random
 import cv2
@@ -31,12 +30,11 @@ counter_data_longest_sequence = [0, 0]
 switch_intensity = 1
 
 
-# =============== ZEGARY =================
 # Metoda zegara dla scramblerów addytywnych, sprzężenie zwrotne xora dla bitów ramki i sygnału wejściowego
 def sync_clock(frame, data, bit):
     if bit[1] != -1:  # Sprawdzanie czy używamy obu bitów, potrzebne dla niektórych scramblerów
         temp = xor(frame[bit[0] - 1], frame[bit[1] - 1])  # XOR dla bit[0] i bit[1],
-    else:  # Jeśli tylko 1 bit, przypisujemy wartość temu bitowi
+    else:  # Jeśli jest tylko 1 bit, przypisujemy wartość temu bitowi
         temp = frame[bit[0] - 1]
     frame.pop()  # Usuwanie ostatniego bitu z ramki
     frame.insert(0, temp)  # Dodanie na początek wartości xor
@@ -48,7 +46,7 @@ def sync_clock(frame, data, bit):
 def async_clock(frame, data, bit):
     if bit[1] != -1:  # Sprawdzanie czy używamy obu bitów, potrzebne dla niektórych scramblerów
         temp = xor(frame[bit[0] - 1], frame[bit[1] - 1])  # XOR dla bit[0] i bit[1],
-    else:  # Jeśli tylko 1 bit, przypisujemy wartość temu bitowi
+    else:  # Jeśli jest tylko 1 bit, przypisujemy wartość temu bitowi
         temp = frame[bit[0] - 1]
     frame.pop()  # Usuwanie ostatniego bitu z ramki
     xor_value = xor(temp, data)  # Sprzężenie zwrotne wartości syganłu wejściowego i xora z bitów ramki
@@ -60,7 +58,7 @@ def async_clock(frame, data, bit):
 def reverse_async_clock(frame, data, bit):
     if bit[1] != -1:  # Sprawdzanie czy używamy obu bitów, potrzebne dla niektórych scramblerów
         temp = xor(frame[bit[0] - 1], frame[bit[1] - 1])  # XOR dla bit[0] i bit[1],
-    else:  # Jeśli tylko 1 bit, przypisujemy wartość temu bitowi
+    else:  # Jeśli jest tylko 1 bit, przypisujemy wartość temu bitowi
         temp = frame[bit[0] - 1]
     frame.pop()  # Usuwanie ostatniego elementu ramki
     frame.insert(0, data)  # Dodawanie na początek ramki bitu sygnału
@@ -68,7 +66,6 @@ def reverse_async_clock(frame, data, bit):
     return xor_value  # Zwrócenie zdekodowanego sygnału
 
 
-# =============== SCRAMBLERY =================
 # DVB Scrambler addytywny
 def scramDVB(bits):
     dataLength = len(bits)  # Długość sygnału wejściowego
@@ -118,9 +115,8 @@ def scramX16(bits):
     return output_signal
 
 
-# =============== FUNKCJE POMOCNICZE =================
 # Zliczanie ilości bitów
-def sumOfBits(bits, counter):
+def sum_of_bits(bits, counter):
     for i in range(0, len(bits)):
         if bits[i] == 0:
             counter[0] += 1
@@ -230,7 +226,7 @@ def tests_DVB(bits, array):
     descrambled_dvb_array = array.copy()
 
     scrambled_dvb_bits = scramDVB(bits.copy())  # Scramblowanie
-    sumOfBits(scrambled_dvb_bits, counter_dvb)  # Zliczanie ilości bitów
+    sum_of_bits(scrambled_dvb_bits, counter_dvb)  # Zliczanie ilości bitów
     bits_to_bytes(scrambled_dvb_bits, scrambled_dvb_array)  # Konwersja bitów na bajty
     cv2.imwrite('Output/DVB/DVB_scrambled.jpg', scrambled_dvb_array)  # Zapisywanie zescramblowanego obrazka
 
@@ -257,7 +253,7 @@ def tests_V34(bits, array):
     descrambled_v34_array = array.copy()
 
     scrambled_v34_bits = scramV34(bits.copy())  # Scramblowanie
-    sumOfBits(scrambled_v34_bits, counter_v34)  # Zliczanie ilości bitów
+    sum_of_bits(scrambled_v34_bits, counter_v34)  # Zliczanie ilości bitów
     bits_to_bytes(scrambled_v34_bits, scrambled_v34_array)  # Konwersja bitów na bajty
     cv2.imwrite('Output/V34/V34_scrambled.jpg', scrambled_v34_array)  # Zapisywanie zescramblowanego obrazka
 
@@ -283,7 +279,7 @@ def tests_X16(bits, array):
     descrambled_x16_array = array.copy()
 
     scrambled_x16_bits = scramX16(bits.copy())  # Scramblowanie
-    sumOfBits(scrambled_x16_bits, counter_x16)  # Zliczanie ilości bitów
+    sum_of_bits(scrambled_x16_bits, counter_x16)  # Zliczanie ilości bitów
     bits_to_bytes(scrambled_x16_bits, scrambled_x16_array)  # Konwersja bitów na bajty
     cv2.imwrite('Output/X16/X16_scrambled.jpg', scrambled_x16_array)  # Zapisywanie zescramblowanego obrazka
     # Kopia zescramblowanego obrazka, potrzebne do przywracania początkowej wersji po kazdym wykonaniu pętli
@@ -304,7 +300,7 @@ def tests_X16(bits, array):
 
 def tests_start(bits, array):
     # Zliczanie bitów
-    sumOfBits(bits, data_counter)
+    sum_of_bits(bits, data_counter)
 
     for i in range(1, 101):  # 1-100
         # Kopiowanie obrazka i zamiana bitów w kopii
@@ -330,8 +326,9 @@ def count_switched_bits(bits, counter):
 def write_stats_to_excel():
     workbook = xlsxwriter.Workbook('Output/Statistics/stats.xlsx')
     worksheet = workbook.add_worksheet()
+    table_style = 'Table Style Light 11'
 
-    worksheet.add_table('B3:F103', {'header_row': True, 'style': 'Table Style Light 11',
+    worksheet.add_table('B3:F103', {'header_row': True, 'style': table_style,
                                     'autofilter': False, 'first_column': True,
                                     'columns': [{'header': 'Switch Intensity'},
                                                 {'header': 'START'},
@@ -348,7 +345,7 @@ def write_stats_to_excel():
         worksheet.write(i + 3, 4, counter_v34_diffrent_bits[i])
         worksheet.write(i + 3, 5, counter_x16_diffrent_bits[i])
 
-    worksheet.add_table('H3:L5', {'header_row': True, 'style': 'Table Style Light 11',
+    worksheet.add_table('H3:L5', {'header_row': True, 'style': table_style,
                                     'autofilter': False, 'first_column': True,
                                     'columns': [{'header': 'Longest bit sequence'},
                                                 {'header': 'Start'},
@@ -371,7 +368,7 @@ def write_stats_to_excel():
     worksheet.write(3, 11, counter_x16_longest_sequence[0])
     worksheet.write(4, 11, counter_x16_longest_sequence[1])
 
-    worksheet.add_table('H7:L9', {'header_row': True, 'style': 'Table Style Light 11',
+    worksheet.add_table('H7:L9', {'header_row': True, 'style': table_style,
                                   'autofilter': False, 'first_column': True,
                                   'columns': [{'header': 'Amount of bits'},
                                               {'header': 'Start'},
@@ -398,27 +395,27 @@ def write_stats_to_excel():
 
 
 def print_stats():
-    print(f"===== START IMAGE =====")
-    print(f"Amount of Bits: [0: {data_counter[0]}], [1: {data_counter[1]}]")
-    print(f"Longest sequence of bits: [0: {counter_data_longest_sequence[0]}], [1: {counter_data_longest_sequence[1]}]")
-    print(f"Amount of bits switched: {counter_data_diffrent_bits[switch_intensity - 1]}")
+    print(f"================== START IMAGE ==================")
+    print((f"| Amount of Bits: [0:{data_counter[0]}], [1:{data_counter[1]}]").ljust(48)+"|")
+    print((f"| Longest sequence of bits: [0:{counter_data_longest_sequence[0]}], [1:{counter_data_longest_sequence[1]}]").ljust(48)+"|")
+    print((f"| Amount of bits switched: {counter_data_diffrent_bits[switch_intensity - 1]}").ljust(48)+"|")
 
-    print(f"========= DVB =========")
-    print(f"Amount of Bits: [0: {counter_dvb[0]}], [1: {counter_dvb[1]}]")
-    print(f"Longest sequence of bits: [0: {counter_dvb_longest_sequence[0]}], [1: {counter_dvb_longest_sequence[1]}]")
-    print(f"Amount of bits switched: {counter_dvb_diffrent_bits[switch_intensity - 1]}")
+    print(f"====================== DVB ======================")
+    print((f"| Amount of Bits: [0:{counter_dvb[0]}], [1:{counter_dvb[1]}]").ljust(48)+"|")
+    print((f"| Longest sequence of bits: [0:{counter_dvb_longest_sequence[0]}], [1:{counter_dvb_longest_sequence[1]}]").ljust(48)+"|")
+    print((f"| Amount of bits switched: {counter_dvb_diffrent_bits[switch_intensity - 1]}").ljust(48)+"|")
 
-    print(f"========= V34 =========")
-    print(f"Amount of Bits: [0: {counter_v34[0]}], [1: {counter_v34[1]}]")
-    print(f"Longest sequence of bits: [0: {counter_v34_longest_sequence[0]}], [1: {counter_v34_longest_sequence[1]}]")
-    print(f"Amount of bits switched: {counter_v34_diffrent_bits[switch_intensity - 1]}")
+    print(f"====================== V34 ======================")
+    print((f"| Amount of Bits: [0:{counter_v34[0]}], [1:{counter_v34[1]}]").ljust(48)+"|")
+    print((f"| Longest sequence of bits: [0:{counter_v34_longest_sequence[0]}], [1:{counter_v34_longest_sequence[1]}]").ljust(48)+"|")
+    print((f"| Amount of bits switched: {counter_v34_diffrent_bits[switch_intensity - 1]}").ljust(48)+"|")
 
-    print(f"========= X16 =========")
-    print(f"Amount of Bits: [0: {counter_x16[0]}], [1: {counter_x16[1]}]")
-    print(f"Longest sequence of bits: [0: {counter_x16_longest_sequence[0]}], [1: {counter_x16_longest_sequence[1]}]")
-    print(f"Amount of bits switched: {counter_x16_diffrent_bits[switch_intensity - 1]}")
-    print(f"=======================")
-    print(f"Ilość zamienionych bitów wyświetlana dla wartości intensywności zamiany równej {switch_intensity}!")
+    print(f"====================== X16 ======================")
+    print((f"| Amount of Bits: [0:{counter_x16[0]}], [1:{counter_x16[1]}]").ljust(48)+"|")
+    print((f"| Longest sequence of bits: [0:{counter_x16_longest_sequence[0]}], [1:{counter_x16_longest_sequence[1]}]").ljust(48)+"|")
+    print((f"| Amount of bits switched: {counter_x16_diffrent_bits[switch_intensity - 1]}]").ljust(48)+"|")
+    print(f"=================================================")
+    print(f"\nIlość zamienionych bitów wyświetlana dla wartości intensywności zamiany równej {switch_intensity}!")
 
 
 def del_output():
@@ -435,7 +432,6 @@ def del_output():
     os.remove("Output/X16/X16_descrambled.jpg")
 
 
-# =============== WYWOŁYWANIE PROGRAMU =================
 # Wczytywanie pliku do wysłania
 image_name = input("Type file name: ")
 image = cv2.imread(image_name)
@@ -452,23 +448,19 @@ image_to_bits(image_data, image_data_bits)
 
 bytes_as_String = ''.join(str(x) for x in image_data_bits)
 
-switch_intensity = int(input("\nType switching intensity [1-100] (only for in-console stats and file save): "))
+switch_intensity = int(input("\nType switching intensity [1-100] (only for in-console stats and file save): \n"))
 if switch_intensity < 1 or switch_intensity > 100:
-    print(f"Value is not between 1-100! Changing it to 50.")
+    print(f"Value is not between 1-100! Changing it to 50.\n")
     switch_intensity = 50
 
-# =============== START ================
 tests_start(image_data_bits.copy(), image_array.copy())
 
-# =============== DVB ================
 tests_DVB(image_data_bits.copy(), image_array.copy())
 
-# =============== V34 ================
 tests_V34(image_data_bits.copy(), image_array.copy())
 
-# =============== X16 ================
 tests_X16(image_data_bits.copy(), image_array.copy())
-# =============== AES ================
+
 encryption(bytes_as_String.encode('UTF-8'), image_array.copy())
 
 # Wyświetlanie statystyk
